@@ -1,6 +1,7 @@
 import os
 import socket
 import random
+import time
 
 import cv2
 import keyboard
@@ -42,7 +43,11 @@ class CaptureVideoThread(QThread):
         self.bool_capture = False
         self.capture_index = 0
         self.file_path = None
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(configs.camera_index)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        ret, frame = self.cap.read()
+
         # show cap result
         # while True:
         #     ret, frame = self.cap.read()
@@ -54,16 +59,35 @@ class CaptureVideoThread(QThread):
 
     def run(self):
         while True:
-            while self.bool_capture and self.file_path:
+            frame_list = [None for i in range(40)]
+
+            file_path = None
+            if self.bool_capture:
+                time1 = time.time()
                 file_path = f"output/subject_{configs.subject_num}/{configs.mode}/{self.file_path}/"
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
-
+                time2 = time.time()
+                print("t2 - t1", time2 - time1)
+            while self.bool_capture and file_path:
+                time3 = time.time()
                 ret, frame = self.cap.read()
+                time4 = time.time()
+
                 if ret:
                     filename = f"{file_path}/capture_{self.capture_index}.jpg"
-                    cv2.imwrite(filename, frame)
+                    frame_list[self.capture_index] = ((filename, frame))
                     self.capture_index += 1
+                print("t4 - t3", time4 - time3)
+
+            if frame_list[0]:
+                time5 = time.time()
+                for i in range(len(frame_list)):
+                    if frame_list[i]:
+                        cv2.imwrite(frame_list[0], frame_list[1])
+                time6 = time.time()
+                print("t6 - t5", time6 - time5)
+
 
     def capture_video(self, data):
         data_split = data.split("*")
@@ -199,10 +223,23 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    # server()
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # mainWindow = MainWindow()
+    # mainWindow.show()
+    # sys.exit(app.exec_())
 
+    cap = cv2.VideoCapture(configs.camera_index)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
+    # show cap result
+    while True:
+        time1 = time.time()
+        ret, frame = cap.read()
+        time2 = time.time()
+        print(time2 - time1)
+        if ret:
+            cv2.imshow("capture", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    cap.release()
