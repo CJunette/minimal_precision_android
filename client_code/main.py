@@ -36,6 +36,9 @@ class CommunicationThread(QThread):
                 print(f"Received: {data}")
                 self.update_signal.emit(data)
 
+    def send(self, data):
+        self.client_socket.send(data.encode('utf-8'))
+
 
 class CaptureVideoThread(QThread):
     update_signal = pyqtSignal(str)
@@ -155,17 +158,18 @@ class MainWindow(QMainWindow):
 
     def receive_capture_data(self, data):
         camera_name = data.split("*")[0]
-        if camera_name == "distant_camera":
+        if camera_name == "camera_distant":
             self.bool_distant_camera_finished = True
 
-        if camera_name == "eye_camera_left":
+        if camera_name == "camera_left_eye":
             self.bool_eye_camera_left_finished = True
 
-        if camera_name == "eye_camera_right":
+        if camera_name == "camera_right_eye":
             self.bool_eye_camera_right_finished = True
 
         if self.bool_distant_camera_finished and self.bool_eye_camera_left_finished and self.bool_eye_camera_right_finished:
             self.bool_exp_processing = False
+            self.communication_thread.send("capture_finish*\n")
 
     def keyPressEvent(self, event):
         self.label.setText(event.text())
