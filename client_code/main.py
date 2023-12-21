@@ -38,14 +38,16 @@ class CommunicationThread(QThread):
 
 
 class CaptureVideoThread(QThread):
-    def __init__(self):
+    update_signal = pyqtSignal(str)
+    def __init__(self, camera_name, camera_index):
         super().__init__()
         self.bool_capture = False
         self.capture_index = 0
         self.file_path = None
-        self.cap = cv2.VideoCapture(configs.camera_index)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.cap = cv2.VideoCapture(camera_index)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.camera_name = camera_name
         ret, frame = self.cap.read()
 
         # show cap result
@@ -59,35 +61,35 @@ class CaptureVideoThread(QThread):
 
     def run(self):
         while True:
-            frame_list = [None for i in range(40)]
+            frame_list = []
 
             file_path = None
             if self.bool_capture:
-                time1 = time.time()
-                file_path = f"output/subject_{configs.subject_num}/{configs.mode}/{self.file_path}/"
+                # time1 = time.time()
+                file_path = f"output/subject_{configs.subject_num}/{self.camera_name}/{self.file_path}/"
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
-                time2 = time.time()
-                print("t2 - t1", time2 - time1)
+                # time2 = time.time()
+                # print("t2 - t1", time2 - time1)
             while self.bool_capture and file_path:
-                time3 = time.time()
+                # time3 = time.time()
                 ret, frame = self.cap.read()
-                time4 = time.time()
+                # time4 = time.time()
 
                 if ret:
                     filename = f"{file_path}/capture_{self.capture_index}.jpg"
-                    frame_list[self.capture_index] = ((filename, frame))
+                    frame_list.append((filename, frame))
                     self.capture_index += 1
-                print("t4 - t3", time4 - time3)
+                # print("t4 - t3", time4 - time3)
 
-            if frame_list[0]:
-                time5 = time.time()
+            if len(frame_list) > 0:
+                # time5 = time.time()
                 for i in range(len(frame_list)):
                     if frame_list[i]:
-                        cv2.imwrite(frame_list[0], frame_list[1])
-                time6 = time.time()
-                print("t6 - t5", time6 - time5)
-
+                        cv2.imwrite(frame_list[i][0], frame_list[i][1])
+                # time6 = time.time()
+                # print("t6 - t5", time6 - time5)
+                self.update_signal.emit(f"{self.camera_name}*capture_finish")
 
     def capture_video(self, data):
         data_split = data.split("*")
@@ -123,19 +125,46 @@ class MainWindow(QMainWindow):
         self.name_list = init_name_list()
         self.current_index = -1
         self.bool_exp_processing = False
+        self.bool_distant_camera_finished = False
+        self.bool_eye_camera_left_finished = False
+        self.bool_eye_camera_right_finished = False
 
         self.communication_thread = CommunicationThread(self.client_socket)
         self.communication_thread.update_signal.connect(self.on_receive_data)
         self.communication_thread.start()
 
-        self.capture_video_thread = CaptureVideoThread()
-        self.update_signal.connect(self.capture_video_thread.capture_video)
-        self.capture_video_thread.start()
+        self.capture_video_thread_distant = CaptureVideoThread("camera_distant", configs.camera_distant)
+        self.update_signal.connect(self.capture_video_thread_distant.capture_video)
+        self.capture_video_thread_distant.update_signal.connect(self.receive_capture_data)
+        self.capture_video_thread_distant.start()
+
+        self.capture_video_thread_left_eye = CaptureVideoThread("camera_left_eye", configs.camera_left_eye)
+        self.update_signal.connect(self.capture_video_thread_left_eye.capture_video)
+        self.capture_video_thread_left_eye.update_signal.connect(self.receive_capture_data)
+        self.capture_video_thread_left_eye.start()
+
+        self.capture_video_thread_right_eye = CaptureVideoThread("camera_right_eye", configs.camera_right_eye)
+        self.update_signal.connect(self.capture_video_thread_right_eye.capture_video)
+        self.capture_video_thread_right_eye.update_signal.connect(self.receive_capture_data)
+        self.capture_video_thread_right_eye.start()
 
     def on_receive_data(self, data):
         if data == "finish":
-            self.bool_exp_processing = False
             self.update_signal.emit("finish*")
+
+    def receive_capture_data(self, data):
+        camera_name = data.split("*")[0]
+        if camera_name == "distant_camera":
+            self.bool_distant_camera_finished = True
+
+        if camera_name == "eye_camera_left":
+            self.bool_eye_camera_left_finished = True
+
+        if camera_name == "eye_camera_right":
+            self.bool_eye_camera_right_finished = True
+
+        if self.bool_distant_camera_finished and self.bool_eye_camera_left_finished and self.bool_eye_camera_right_finished:
+            self.bool_exp_processing = False
 
     def keyPressEvent(self, event):
         self.label.setText(event.text())
@@ -207,6 +236,9 @@ class MainWindow(QMainWindow):
 
                     self.bool_exp_processing = True
                     if bool_record_video:
+                        self.bool_eye_camera_right_finished = False
+                        self.bool_eye_camera_left_finished = False
+                        self.bool_distant_camera_finished = False
                         self.update_signal.emit(f"start*{self.name_list[self.current_index].get('name')}")
 
 
@@ -228,9 +260,12 @@ if __name__ == '__main__':
     # mainWindow.show()
     # sys.exit(app.exec_())
 
-    cap = cv2.VideoCapture(configs.camera_index)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap = cv2.VideoCapture(configs.camera_distant)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
+
+    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # show cap result
     while True:
