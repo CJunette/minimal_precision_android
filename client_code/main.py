@@ -39,14 +39,15 @@ class CommunicationThread(QThread):
 
 class CaptureVideoThread(QThread):
     update_signal = pyqtSignal(str)
-    def __init__(self, camera_name, camera_index):
+
+    def __init__(self, camera_name, camera_index, output_width, output_height):
         super().__init__()
         self.bool_capture = False
         self.capture_index = 0
         self.file_path = None
         self.cap = cv2.VideoCapture(camera_index)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, output_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, output_height)
         self.camera_name = camera_name
         ret, frame = self.cap.read()
 
@@ -133,17 +134,17 @@ class MainWindow(QMainWindow):
         self.communication_thread.update_signal.connect(self.on_receive_data)
         self.communication_thread.start()
 
-        self.capture_video_thread_distant = CaptureVideoThread("camera_distant", configs.camera_distant)
+        self.capture_video_thread_distant = CaptureVideoThread("camera_distant", configs.camera_distant, 1920, 1080)
         self.update_signal.connect(self.capture_video_thread_distant.capture_video)
         self.capture_video_thread_distant.update_signal.connect(self.receive_capture_data)
         self.capture_video_thread_distant.start()
 
-        self.capture_video_thread_left_eye = CaptureVideoThread("camera_left_eye", configs.camera_left_eye)
+        self.capture_video_thread_left_eye = CaptureVideoThread("camera_left_eye", configs.camera_left_eye, 500, 500)
         self.update_signal.connect(self.capture_video_thread_left_eye.capture_video)
         self.capture_video_thread_left_eye.update_signal.connect(self.receive_capture_data)
         self.capture_video_thread_left_eye.start()
 
-        self.capture_video_thread_right_eye = CaptureVideoThread("camera_right_eye", configs.camera_right_eye)
+        self.capture_video_thread_right_eye = CaptureVideoThread("camera_right_eye", configs.camera_right_eye, 500, 500)
         self.update_signal.connect(self.capture_video_thread_right_eye.capture_video)
         self.capture_video_thread_right_eye.update_signal.connect(self.receive_capture_data)
         self.capture_video_thread_right_eye.start()
@@ -234,8 +235,8 @@ class MainWindow(QMainWindow):
                     print("sent: ", message)
                     self.client_socket.send(message.encode())
 
-                    self.bool_exp_processing = True
                     if bool_record_video:
+                        self.bool_exp_processing = True
                         self.bool_eye_camera_right_finished = False
                         self.bool_eye_camera_left_finished = False
                         self.bool_distant_camera_finished = False
@@ -255,26 +256,26 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    # app = QApplication(sys.argv)
-    # mainWindow = MainWindow()
-    # mainWindow.show()
-    # sys.exit(app.exec_())
+    app = QApplication(sys.argv)
+    mainWindow = MainWindow()
+    mainWindow.show()
+    sys.exit(app.exec_())
 
-    cap = cv2.VideoCapture(configs.camera_distant)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
-
-    print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # show cap result
-    while True:
-        time1 = time.time()
-        ret, frame = cap.read()
-        time2 = time.time()
-        print(time2 - time1)
-        if ret:
-            cv2.imshow("capture", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    cap.release()
+    # cap = cv2.VideoCapture(configs.camera_right_eye)
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 500)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 500)
+    #
+    # print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    #
+    # # show cap result
+    # while True:
+    #     time1 = time.time()
+    #     ret, frame = cap.read()
+    #     time2 = time.time()
+    #     print(time2 - time1)
+    #     if ret:
+    #         cv2.imshow("capture", frame)
+    #         if cv2.waitKey(1) & 0xFF == ord('q'):
+    #             break
+    # cap.release()
