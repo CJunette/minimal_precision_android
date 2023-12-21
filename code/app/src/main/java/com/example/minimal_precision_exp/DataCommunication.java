@@ -53,6 +53,11 @@ public class DataCommunication {
                             else{mContext.mShowCirclesAndRecordData.mNextCircleIndex = Integer.parseInt(next_circle_index);}
                         }
 
+                        if (message.equals("capture_finish*"))
+                        {
+                            mContext.mShowCirclesAndRecordData.turnNextCircleVisible();
+                        }
+
                         Log.e("INDEX_INFORMATION", "mOrderIndex: " + mContext.mShowCirclesAndRecordData.mOrderIndex + ", mCircleIndex: " + mContext.mShowCirclesAndRecordData.mCircleIndex);
 
                         mContext.runOnUiThread(new Runnable() {

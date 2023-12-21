@@ -118,10 +118,6 @@ public class ShowCirclesAndRecordData
             {
                 current_view.setVisibility(View.INVISIBLE);
                 mBoolColorChanging = false;
-                if (!Objects.equals(mNextCircleIndex, null))
-                {
-                    mCircles.get(mNextCircleIndex).mCircleView.setVisibility(View.VISIBLE);
-                }
                 background.setTint(Color.BLACK);
                 mContext.mDataCommunication.sendMessage("finish");
             }
@@ -134,6 +130,22 @@ public class ShowCirclesAndRecordData
         });
         // 启动动画
         colorAnimation.start();
+    }
+
+    void turnNextCircleVisible()
+    {
+        // use original thread to create make circle visible
+        mContext.runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if (!Objects.equals(mNextCircleIndex, null))
+                {
+                    mCircles.get(mNextCircleIndex).mCircleView.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     boolean showNextCircles()
