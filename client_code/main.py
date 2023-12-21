@@ -132,7 +132,6 @@ class MainWindow(QMainWindow):
         self.bool_distant_camera_finished = False
         self.bool_eye_camera_left_finished = False
         self.bool_eye_camera_right_finished = False
-
         self.communication_thread = CommunicationThread(self.client_socket)
         self.communication_thread.update_signal.connect(self.on_receive_data)
         self.communication_thread.start()
@@ -151,6 +150,7 @@ class MainWindow(QMainWindow):
         self.update_signal.connect(self.capture_video_thread_right_eye.capture_video)
         self.capture_video_thread_right_eye.update_signal.connect(self.receive_capture_data)
         self.capture_video_thread_right_eye.start()
+
 
     def on_receive_data(self, data):
         if data == "finish":
@@ -244,19 +244,7 @@ class MainWindow(QMainWindow):
                         self.bool_eye_camera_right_finished = False
                         self.bool_eye_camera_left_finished = False
                         self.bool_distant_camera_finished = False
-                        self.update_signal.emit(f"start*{self.name_list[self.current_index].get('name')}")
-
-
-    # def capture_video(self):
-    #     file_path = f"output/subject_{configs.subject_num}/{configs.mode}/{self.name_list[self.current_index]}/"
-    #     if not os.path.exists(file_path):
-    #         os.makedirs(file_path)
-    #
-    #     for i in range(20):
-    #         ret, frame = self.cap.read()
-    #         if ret:
-    #             filename = f"{file_path}/capture_{i}.jpg"
-    #             cv2.imwrite(filename, frame)
+                        self.update_signal.emit(f"start*{self.name_list[self.current_index - 1].get('name')}")
 
 
 if __name__ == '__main__':

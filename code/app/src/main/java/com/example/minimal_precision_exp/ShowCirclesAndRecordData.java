@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -143,6 +144,8 @@ public class ShowCirclesAndRecordData
                 if (!Objects.equals(mNextCircleIndex, null))
                 {
                     mCircles.get(mNextCircleIndex).mCircleView.setVisibility(View.VISIBLE);
+                    TextView text_view = mContext.findViewById(R.id.text_view);
+                    text_view.setText(String.format("%d", mOrderIndex));
                 }
             }
         });
