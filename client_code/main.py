@@ -22,12 +22,14 @@ def init_name_list():
             name_list.append({"circle_index": i * configs.col_num + j, "name": f"row_{i}-col_{j}"})
 
     if configs.mode == "half_distance":
-        for i in range(0, configs.col_num * 2):
+        for i in range(0, configs.col_num * 2 - 1):
             for j in range(24, 31):
                 if (i / 2 == int(i / 2)) and (j / 2 == int(j / 2)):
                     continue
                 name_list.append({"circle_index": len(name_list), "name": f"row_{j/2:.1f}-col_{i/2:.1f}"})
 
+    random_seed = float(configs.subject_num) * 100
+    random.seed(random_seed)
     random.shuffle(name_list)
     return name_list
 

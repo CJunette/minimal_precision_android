@@ -90,7 +90,7 @@ public class ShowCirclesAndRecordData
 
         if (Objects.equals(mContext.mExperimentName, "half_distance"))
         {
-            for (float i = 0; i < num_col + 1; i += 0.5)
+            for (float i = 0; i < num_col + 0.5; i += 0.5)
             {
                 for (float j = 12; j <= 15; j += 0.5)
                 {
