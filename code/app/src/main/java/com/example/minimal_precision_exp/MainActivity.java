@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity
     public ShowCirclesAndRecordData mShowCirclesAndRecordData = null;
     public RecordVideo mRecordVideo = null;
     public DataCommunication mDataCommunication = null;
-    public String mSubjectName = "0.0";
+    public String mExperimentName = "half_distance";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
