@@ -7,7 +7,7 @@ def get_row_and_col(class_name):
 
 
 def check_file_num(num_limit, subject_num):
-    file_path_prefix = f"output/{subject_num}/"
+    file_path_prefix = f"output/subject_{subject_num}/"
     camera_distant_file_prefix = f"{file_path_prefix}camera_distant/"
     camera_left_eye_file_prefix = f"{file_path_prefix}camera_left_eye/"
     camera_right_eye_file_prefix = f"{file_path_prefix}camera_right_eye/"

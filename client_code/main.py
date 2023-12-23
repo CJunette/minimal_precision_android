@@ -17,5 +17,5 @@ import utils
 if __name__ == '__main__':
     # exp.run_exp()
     utils.check_file_num(20, "0.0")
-    utils.check_file_num(20, "0.1")
+    # utils.check_file_num(20, "0.1")
 
