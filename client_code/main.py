@@ -16,6 +16,8 @@ import utils
 
 if __name__ == '__main__':
     # exp.run_exp()
-    utils.check_file_num(20, "0.0")
+
+    # 检查图像数量是否都至少大于20。
+    # utils.check_file_num(20, "0.0")
     # utils.check_file_num(20, "0.1")
 
