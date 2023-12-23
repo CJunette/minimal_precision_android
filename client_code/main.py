@@ -1,6 +1,8 @@
 import os
+import shutil
 import socket
 import random
+import subprocess
 import time
 
 import cv2
@@ -18,6 +20,14 @@ def init_name_list():
     for i in range(configs.row_num):
         for j in range(configs.col_num):
             name_list.append({"circle_index": i * configs.col_num + j, "name": f"row_{i}-col_{j}"})
+
+    if configs.mode == "half_distance":
+        for i in range(0, configs.col_num * 2):
+            for j in range(24, 31):
+                if (i / 2 == int(i / 2)) and (j / 2 == int(j / 2)):
+                    continue
+                name_list.append({"circle_index": len(name_list), "name": f"row_{j/2:.1f}-col_{i/2:.1f}"})
+
     random.shuffle(name_list)
     return name_list
 
@@ -87,12 +97,12 @@ class CaptureVideoThread(QThread):
                 # print("t4 - t3", time4 - time3)
 
             if len(frame_list) > 0:
-                # time5 = time.time()
+                time5 = time.time()
                 for i in range(len(frame_list)):
                     if frame_list[i]:
                         cv2.imwrite(frame_list[i][0], frame_list[i][1])
-                # time6 = time.time()
-                # print("t6 - t5", time6 - time5)
+                time6 = time.time()
+                print("t6 - t5", time6 - time5)
                 self.update_signal.emit(f"{self.camera_name}*capture_finish")
 
     def capture_video(self, data):
@@ -150,7 +160,6 @@ class MainWindow(QMainWindow):
         self.update_signal.connect(self.capture_video_thread_right_eye.capture_video)
         self.capture_video_thread_right_eye.update_signal.connect(self.receive_capture_data)
         self.capture_video_thread_right_eye.start()
-
 
     def on_receive_data(self, data):
         if data == "finish":
@@ -220,6 +229,26 @@ class MainWindow(QMainWindow):
                             return
                         else:
                             self.current_index -= 1
+                            # delete pictures of last time
+                            if self.current_index >= 0:
+                                message = "deleting_files*\n"
+                                self.client_socket.send(message.encode("utf-8"))
+                                self.bool_exp_processing = True
+                                camera_distant_file_path_to_be_deleted = f"output/subject_{configs.subject_num}/camera_distant/{self.name_list[self.current_index].get('name')}"
+                                camera_left_eye_file_path_to_be_deleted = f"output/subject_{configs.subject_num}/camera_left_eye/{self.name_list[self.current_index].get('name')}"
+                                camera_right_eye_file_path_to_be_deleted = f"output/subject_{configs.subject_num}/camera_right_eye/{self.name_list[self.current_index].get('name')}"
+                                time1 = time.time()
+                                self.delete_files(camera_distant_file_path_to_be_deleted)
+                                time2 = time.time()
+                                self.delete_files(camera_left_eye_file_path_to_be_deleted)
+                                time3 = time.time()
+                                self.delete_files(camera_right_eye_file_path_to_be_deleted)
+                                time4 = time.time()
+                                print("time2-time1: ", time2 - time1)
+                                print("time3-time2: ", time3 - time2)
+                                print("time4-time3: ", time4 - time3)
+                                self.bool_exp_processing = False
+
                             if self.current_index == -1:
                                 self.current_index = 0
                                 return
@@ -245,6 +274,12 @@ class MainWindow(QMainWindow):
                         self.bool_eye_camera_left_finished = False
                         self.bool_distant_camera_finished = False
                         self.update_signal.emit(f"start*{self.name_list[self.current_index - 1].get('name')}")
+
+    @staticmethod
+    def delete_files(file_path):
+        if os.path.exists(file_path):
+            cmd = f'rmdir /S /Q \"{file_path}\"'
+            subprocess.run(cmd, shell=True)
 
 
 if __name__ == '__main__':

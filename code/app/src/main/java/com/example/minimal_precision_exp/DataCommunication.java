@@ -58,6 +58,11 @@ public class DataCommunication {
                             mContext.mShowCirclesAndRecordData.turnNextCircleVisible();
                         }
 
+                        if (message.equals("deleting_files*"))
+                        {
+                            mContext.mShowCirclesAndRecordData.turnAllCircleInvisible();
+                        }
+
                         Log.e("INDEX_INFORMATION", "mOrderIndex: " + mContext.mShowCirclesAndRecordData.mOrderIndex + ", mCircleIndex: " + mContext.mShowCirclesAndRecordData.mCircleIndex);
 
                         mContext.runOnUiThread(new Runnable() {

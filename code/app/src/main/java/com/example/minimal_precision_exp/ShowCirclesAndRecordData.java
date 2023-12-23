@@ -22,7 +22,7 @@ import java.util.Objects;
 
 public class ShowCirclesAndRecordData
 {
-    static final int mDurationGradient = 1000;
+    static final int mDurationGradient = 800;
     private final MainActivity mContext;
     ArrayList<CircleClass> mCircles;
     ViewGroup mLayout;
@@ -46,7 +46,7 @@ public class ShowCirclesAndRecordData
         for (CircleClass circle : mCircles)
         {
             layout.addView(circle.mCircleView); // 将圆形添加到布局中
-            circle.mCircleView.setVisibility(View.INVISIBLE); // 设置圆形不可见
+//            circle.mCircleView.setVisibility(View.INVISIBLE); // 设置圆形不可见
         }
     }
 
@@ -57,20 +57,20 @@ public class ShowCirclesAndRecordData
         // resolution is 1080px(width), 2312px(height)
         // size is 6.7cm(width), 14.3cm(height)
         // 1.0cm=160px
-        int circle_dist = 160;
+        int circle_dist = 80;
         int circle_width = 20;
         int width = 1080;
         int height = 2312;
-        int num_width = (int) (width / circle_dist);
-//        int num_width = 2; // For debug
-        int num_height = (int) (height / circle_dist);
-//        int num_height = 0; // For debug
-        int padding_width = width - num_width * circle_dist;
-        int padding_height = height - num_height * circle_dist;
+        int num_col = (int) (width / circle_dist);
+//        int num_col = 2; // For debug
+        int num_row = (int) (height / circle_dist);
+//        int num_row = 0; // For debug
+        int padding_width = width - num_col * circle_dist;
+        int padding_height = height - num_row * circle_dist;
 
-        for (int j = 0; j < num_height + 1; j++)
+        for (int j = 0; j < num_row + 1; j++)
         {
-            for (int i = 0; i < num_width + 1; i++)
+            for (int i = 0; i < num_col + 1; i++)
             {
                 View circleView = new View(mContext);
                 ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(circle_width, circle_width); // 设置圆的大小
@@ -85,6 +85,31 @@ public class ShowCirclesAndRecordData
 
                 CircleClass circle_class = new CircleClass(circleView, String.format("row_%d-col_%d", j, i));
                 circles.add(circle_class);
+            }
+        }
+
+        if (Objects.equals(mContext.mExperimentName, "half_distance"))
+        {
+            for (float i = 0; i < num_col + 1; i += 0.5)
+            {
+                for (float j = 12; j <= 15; j += 0.5)
+                {
+                    if ((i == (int) i) && (j == (int) j)) {continue;}
+
+                    View circleView = new View(mContext);
+                    ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(circle_width, circle_width); // 设置圆的大小
+                    circleView.setLayoutParams(params);
+                    circleView.setBackgroundResource(R.drawable.circle); // 设置圆形背景
+
+                    // 设置圆形的位置（假设是绝对位置）
+                    circleView.setX((int) (padding_width / 2 - circle_width / 2) + i * circle_dist); // X坐标
+                    circleView.setY((int) (padding_height / 2 - circle_width / 2) + j * circle_dist); // Y坐标
+
+                    //                Log.e("location", "x: " + circleView.getX() + ", y: " + circleView.getY());
+
+                    CircleClass circle_class = new CircleClass(circleView, String.format("row_%.1f-col_%.1f", j, i ));
+                    circles.add(circle_class);
+                }
             }
         }
 
@@ -146,6 +171,21 @@ public class ShowCirclesAndRecordData
                     mCircles.get(mNextCircleIndex).mCircleView.setVisibility(View.VISIBLE);
                     TextView text_view = mContext.findViewById(R.id.text_view);
                     text_view.setText(String.format("%d", mOrderIndex));
+                }
+            }
+        });
+    }
+
+    void turnAllCircleInvisible()
+    {
+        mContext.runOnUiThread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                for (CircleClass circle : mCircles)
+                {
+                    circle.mCircleView.setVisibility(View.INVISIBLE);
                 }
             }
         });
