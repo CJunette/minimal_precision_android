@@ -128,13 +128,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.label)
         self.client_socket = None
 
-        self.host = 'localhost'
-        self.port = 12345
-        self.client_socket = socket.socket()
+        # self.host = 'localhost'
+        # self.port = 12345
+        # self.client_socket = socket.socket()
+        # # self.client_socket.connect((self.host, self.port))
         # self.client_socket.connect((self.host, self.port))
-        self.client_socket.connect((self.host, self.port))
-        message = "hello from python\n"
-        self.client_socket.send(message.encode())
+        # message = "hello from python\n"
+        # self.client_socket.send(message.encode())
 
         self.name_list = init_name_list()
         self.current_index = -1

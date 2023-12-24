@@ -8,4 +8,6 @@ camera_right_eye = 3
 col_num = 14
 row_num = 29
 
+clipped_image_width = 800
+resized_image_width = 256
 
