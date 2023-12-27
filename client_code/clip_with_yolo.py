@@ -11,7 +11,7 @@ from PIL import Image
 from matplotlib import pyplot as plt
 import configs
 import sys
-import temporary_functions
+import util_functions
 import matplotlib
 from matplotlib import patches
 
@@ -116,37 +116,38 @@ def process_images(model, device, image_path_list, output_path_list, log_file, l
             # log_file.write(f"No person detected in image {image_path_list[index]}")
 
     # if none exist in selected_result_list, interpolate the result.
-    check_none_index = 0
-    while check_none_index < len(selected_result_list):
-        if selected_result_list[check_none_index] is None:
-            if check_none_index == 0:
-                next_index = 1
-                while next_index < len(selected_result_list):
-                    if selected_result_list[next_index] is not None:
-                        for i in range(check_none_index, next_index):
-                            selected_result_list[i] = selected_result_list[next_index]
-                        break
-                    next_index += 1
-                check_none_index = next_index
-            elif check_none_index == len(selected_result_list) - 1:
-                selected_result_list[check_none_index] = selected_result_list[check_none_index - 1]
-            else:
-                next_index = check_none_index + 1
-                previous_index = check_none_index - 1
-                while next_index <= len(selected_result_list):
-                    if next_index < len(selected_result_list) and selected_result_list[next_index] is not None:
-                        for i in range(previous_index + 1, next_index):
-                            selected_result_list[i] = get_interpolate_result(selected_result_list, i, previous_index, next_index)
-                        break
-                    elif next_index == len(selected_result_list):
-                        for i in range(check_none_index, next_index):
-                            selected_result_list[i] = selected_result_list[previous_index]
-                        break
-                    else:
-                        next_index += 1
-                check_none_index = next_index
-        else:
-            check_none_index += 1
+    selected_result_list = util_functions.interpolate_none(selected_result_list, get_interpolate_result, None) # 下方为源代码，我将源代码稍微修改了一下然后集成到util_functions.py中。
+    # check_none_index = 0
+    # while check_none_index < len(selected_result_list):
+    #     if selected_result_list[check_none_index] is None:
+    #         if check_none_index == 0:
+    #             next_index = 1
+    #             while next_index < len(selected_result_list):
+    #                 if selected_result_list[next_index] is not None:
+    #                     for i in range(check_none_index, next_index):
+    #                         selected_result_list[i] = selected_result_list[next_index]
+    #                     break
+    #                 next_index += 1
+    #             check_none_index = next_index
+    #         elif check_none_index == len(selected_result_list) - 1:
+    #             selected_result_list[check_none_index] = selected_result_list[check_none_index - 1]
+    #         else:
+    #             next_index = check_none_index + 1
+    #             previous_index = check_none_index - 1
+    #             while next_index <= len(selected_result_list):
+    #                 if next_index < len(selected_result_list) and selected_result_list[next_index] is not None:
+    #                     for i in range(previous_index + 1, next_index):
+    #                         selected_result_list[i] = get_interpolate_result(selected_result_list, i, previous_index, next_index)
+    #                     break
+    #                 elif next_index == len(selected_result_list):
+    #                     for i in range(check_none_index, next_index):
+    #                         selected_result_list[i] = selected_result_list[previous_index]
+    #                     break
+    #                 else:
+    #                     next_index += 1
+    #             check_none_index = next_index
+    #     else:
+    #         check_none_index += 1
 
     to_pil = ToPILImage()
     cropped_images = [None for _ in range(len(results_pandas.xyxy))]
@@ -192,7 +193,7 @@ def process_images(model, device, image_path_list, output_path_list, log_file, l
             cropped = images_tensor[index][0, :, cropped_y1:cropped_y2, cropped_x1:cropped_x2]
 
         cropped_image = to_pil(cropped.cpu())
-        cropped_image = cropped_image.resize((configs.clipped_image_width, configs.clipped_image_width))
+        cropped_image = cropped_image.resize((configs.resized_image_width, configs.resized_image_width))
         cropped_images[index] = cropped_image
 
     log_file.to_csv(f"{log_file_path}", index=False)
@@ -234,7 +235,7 @@ def resize_clipped_images(subject_name: str, resize_width: int):
     '''
     root_dir = f'output/subject_{subject_name}/clipped_{configs.mode}'
     file_path_list = os.listdir(root_dir)
-    file_path_list.sort(key=temporary_functions.get_row_and_col)
+    file_path_list.sort(key=util_functions.get_row_and_col)
 
     for col_row_file_name in file_path_list:
         file_path = f"{root_dir}/{col_row_file_name}"
@@ -265,14 +266,16 @@ def clip_human_in_batch(subject_num=None):
         os.makedirs(log_path_prefix)
 
     if subject_num is None:
-        log_file_path = f"{log_path_prefix}/log_{configs.subject_num}.csv"
+        log_file_path = f"{log_path_prefix}/subject_{configs.subject_num}"
     else:
-        log_file_path = f"{log_path_prefix}/log_{subject_num}.csv"
+        log_file_path = f"{log_path_prefix}/subject_{subject_num}"
 
     if not os.path.exists(log_file_path):
-        log_file_header = ["image_path", "start_y", "start_x", "end_x", "end_y", "other"]
+        os.makedirs(log_file_path)
+        log_file_name = f"{log_file_path}/log_clip.csv"
+        log_file_header = ["image_path", "start_x", "start_y", "end_x", "end_y", "other"]
         log_file = pd.DataFrame(columns=log_file_header)
-        log_file.to_csv(log_file_path, index=False)
+        log_file.to_csv(log_file_name, index=False)
 
     image_name_list_1 = []
     image_path_list_1 = []
@@ -282,7 +285,7 @@ def clip_human_in_batch(subject_num=None):
         file_path_1 = f"output/subject_{subject_num}/camera_distant"
 
     file_names_1 = os.listdir(file_path_1)
-    file_names_1.sort(key=temporary_functions.get_row_and_col)
+    file_names_1.sort(key=util_functions.get_row_and_col)
 
     for file_name_1 in file_names_1:
         if file_name_1.startswith("row_"):
